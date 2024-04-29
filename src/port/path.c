@@ -598,6 +598,15 @@ get_progname(const char *argv0)
 	if (strlen(progname) > sizeof(EXE) - 1 &&
 		pg_strcasecmp(progname + strlen(progname) - (sizeof(EXE) - 1), EXE) == 0)
 		progname[strlen(progname) - (sizeof(EXE) - 1)] = '\0';
+#elif defined(__EMSCRIPTEN__)
+	/* remove .js and make log a commment */
+	if (progname && strlen(progname)>4) {
+		for (int i=strlen(progname)-2;i>2;i--)
+			progname[i] = progname[i-2];
+		progname[0]= '#';
+		progname[1]= ' ';
+		progname[strlen(progname)-1] = '\0';
+	}
 #endif
 
 	return progname;

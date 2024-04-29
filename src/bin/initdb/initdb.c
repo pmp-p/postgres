@@ -45,7 +45,7 @@
  *
  *-------------------------------------------------------------------------
  */
-
+#define PG_INITDB
 #include "postgres_fe.h"
 
 #include <dirent.h>
@@ -757,7 +757,7 @@ static char *
 get_id(void)
 {
 	const char *username;
-
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 #ifndef WIN32
 	if (geteuid() == 0)			/* 0 is root's uid */
 	{
@@ -766,10 +766,12 @@ get_id(void)
 		exit(1);
 	}
 #endif
-
 	username = get_user_name_or_exit(progname);
 
 	return pg_strdup(username);
+#else
+	return pg_strdup(WASM_USERNAME);
+#endif // wasm
 }
 
 static char *
@@ -2587,8 +2589,13 @@ setup_bin_paths(const char *argv0)
 			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
+#if defined(__EMSCRIPTEN__) || defined(__wasi__)
+			printf("# WARNING: program \"%s\" is needed by %s but was not found in the same directory as \"%s\"\n",
+					 "postgres", progname, full_path);
+#else
 			pg_fatal("program \"%s\" is needed by %s but was not found in the same directory as \"%s\"",
 					 "postgres", progname, full_path);
+#endif // wasm
 		else
 			pg_fatal("program \"%s\" was found by \"%s\" but was not the same version as %s",
 					 "postgres", full_path, progname);
@@ -3024,7 +3031,9 @@ initialize_data_directory(void)
 
 	/* Select suitable configuration settings */
 	set_null_conf();
+#if !defined(__EMSCRIPTEN__) && !defined(__wasi__)
 	test_config_settings();
+#endif // wasm
 
 	/* Now create all the text config files */
 	setup_config();

@@ -22,7 +22,7 @@
  * This should be harmless everywhere else.
  */
 #define _DARWIN_BETTER_REALPATH
-
+#define PG_EXEC
 #ifndef FRONTEND
 #include "postgres.h"
 #else
@@ -411,7 +411,6 @@ pclose_check(FILE *stream)
 {
 	int			exitstatus;
 	char	   *reason;
-
 	exitstatus = pclose(stream);
 
 	if (exitstatus == 0)
